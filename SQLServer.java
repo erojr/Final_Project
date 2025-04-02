@@ -15,13 +15,12 @@ import java.sql.PreparedStatement;
 import java.util.Properties;
 import java.util.Scanner;
 
-
-
+//Main
 public class SQLServer{
 	static Connection connection;
 
 	public static void main(String[] args) throws Exception{
-		//startup
+		//setup
 		MyDatabase db = new MyDatabase();
 		runConsole(db);
 	}
@@ -29,74 +28,158 @@ public class SQLServer{
 	public static void runConsole(MyDatabase db)
 	{
 		Scanner console = new Scanner(System.in);
-		System.out.println("Welcome to the Winnipeg Council Transparency Database!");
+		printWelcome();
 		String line = "";
 		String[] parts;
 		String arg = "";
+		int mode = 0;
 		while (line != null && !line.equals("q") && !line.equals("quit"))
 		{
 			parts = splitLine(line);
 			arg = findArg(line);
-			if(parts.length > 0)
+			if(mode == 0)
+			{
+				if(parts[0].equals("1"))
+				{
+					mode = 1;
+				}
+				else if(parts[0].equals("2"))
+				{
+					mode = 2;
+				}
+				else if(parts[0].equals("3"))
+				{
+					mode = 3;
+				}
+				else
+				{
+					System.out.println("Enter 1 for Browse Mode, 2 for Search Mode, or 3 for Maintenance Mode.");
+				}
+			}
+			else if(parts.length > 0)
 			{
 				if (parts[0].equals("help") || argCheck(arg)) {
-					if(argCheck(arg)) System.out.println("BAD ACTOR \n");
-					printHelp();	
+					printHelp(mode);	
 				}
-			 	else if(parts[0].equals("deleteTables")) {
-					System.out.println("\nABOUT TO DELETE TABLES!! ARE YOU SURE? TYPE confirm");
-					line = console.nextLine();
-					if(line.contains("confirm")) {
-						System.out.println("BOOM! TABLES GONE!");
-						db.deleteTables();
-					}else {
-						System.out.println("DELETE CANCELLED!");
+				else if(mode == 1)//Browse Mode. All "lookup" queries go here
+				{
+					if(parts[0].equals("2"))
+					{
+						mode = 2;
+					}
+					else if(parts[0].equals("3"))
+					{
+						mode = 3;
 					}
 				}
-				else if(parts[0].equals("populateTables")) {
-					System.out.println("\nABOUT TO POPULATE TABLES!! ARE YOU SURE? TYPE confirm");
+				else if(mode == 2)//Search Mode. All "Show" and "Aggregate" queries go here
+				{
+					if(parts[0].equals("1"))
+					{
+						mode = 1;
+					}
+					else if(parts[0].equals("3"))
+					{
+						mode = 3;
+					}
+				}
+				else if(mode == 3)//Maintenance Mode. Delete and restore queries go here
+				{
+					if(parts[0].equals("1"))
+					{
+						mode = 1;
+					}
+					else if(parts[0].equals("2"))
+					{
+						mode = 2;
+					}
+					else if(parts[0].equals("deleteTables")) 
+					{
+						System.out.println("\nABOUT TO DELETE TABLES!! ARE YOU SURE? TYPE confirm");
+						line = console.nextLine();
+						if(line.contains("confirm")) {
+							System.out.println("BOOM! TABLES GONE!");
+							db.deleteTables();
+						}
+						else {
+							System.out.println("DELETE CANCELLED!");
+						}
+					}
+					else if(parts[0].equals("populateTables")) 
+					{
+						System.out.println("\nABOUT TO POPULATE TABLES!! ARE YOU SURE? TYPE confirm");
 						line = console.nextLine();
 						if(line.contains("confirm")) {
 							System.out.println("BOOM! TABLES BACK IN 30 MINUTES!");
 							db.fillTables();
 						}
 						else {
-						System.out.println("REPOPULATE CANCELLED!");
-						}		
+							System.out.println("REPOPULATE CANCELLED!");
+						}	
+					}
 				}
-				else {
+				
+				else 
+				{
 					System.out.println("Type help for help");
 				}
-		}
+			}
 			System.out.print("db > ");
 			line = console.nextLine();
-	}
+		}
 		console.close();
-}
-	
-	private static void printHelp() 
-	{
-		System.out.println("CPG49 Database");
-		
 	}
 
-	private static String[] splitLine(String line) {
+	//Info Functions
+	private static void printWelcome()
+	{
+		System.out.println("Welcome to the Winnipeg Council Transparency Database!");
+		System.out.println("How to use:");
+		System.out.println("-----------");
+		System.out.println("Browse Mode if you want to lookup data");
+		System.out.println("Search Mode if you want to search for relationships in data");
+		System.out.println("Maintenance Mode for clearing and re-populating the database");
+		System.out.println("Enter q to quit");
+	}
+	private static void printHelp(int mode) 
+	{
+		if(mode == 1)//Browse Mode
+		{
+			System.out.println("Browse Mode Commands:");		
+		}
+		else if(mode == 2)//Search Mode
+		{
+			System.out.println("Search Mode Commands:");
+		}
+		else if(mode == 3)//Maintenance Mode
+		{
+			System.out.println("Maintenance Mode Commands:");
+		}
+	}
+
+	//Utillity Functions
+	private static String[] splitLine(String line) 
+	{
 		String[] parts;
 		parts = line.split("\\s+");
 		return parts;
 	}
-	private static String findArg(String line){
+	private static String findArg(String line)
+	{
 		String arg = "";
 		if (line.indexOf(" ") > 0) {
 			arg = line.substring(line.indexOf(" ")).trim();
 		}
 		return arg;
 	}
-	private static boolean argCheck(String arg){ //more rudimentary sql injection defence, others from preparedStatements
+	private static boolean argCheck(String arg)
+	{ //more rudimentary sql injection defence, others from preparedStatements
 		return (arg.contains("-") || arg.contains("\'"));
 	}
+	
 }
 
+//Database connection
 class MyDatabase {
 	private Connection connection; 
 	private static final String MAX_OUTPUT = "TOP 1000 ";
@@ -142,7 +225,7 @@ class MyDatabase {
 		}	
 	}
 
-	//1
+	//Queries
 	public void searchTitle(String name) {
 		try {
 			String sqlMessage = "select OriginalTitle, StartYear, Runtime, Name "+
@@ -164,7 +247,8 @@ class MyDatabase {
 		}
 	}		
 	
-	public void deleteTables() { 
+	public void deleteTables() 
+	{ 
     		try 
 		{ 
     			File myObj = new File("./SQL_Files/DeleteTables.sql"); 
@@ -173,8 +257,8 @@ class MyDatabase {
 			{ 
         			String data = myReader.nextLine(); 
 				try{
-						PreparedStatement statement = connection.prepareStatement(data);
-						statement.execute();
+					PreparedStatement statement = connection.prepareStatement(data);
+					statement.execute();
 				} catch (SQLException e) {
 					e.printStackTrace(System.out);
 				}
@@ -187,16 +271,20 @@ class MyDatabase {
     		} 
   	}
 
-	public void fillTables() { 
+	public void fillTables() 
+	{ 
         	String[] files = {"MakeTables.sql", "Titles.sql", "Genres.sql", "People.sql", "Professions.sql",
 						"AlternateTitles.sql", "TitleGenres.sql", "PeopleProfessions.sql", "KnownFor.sql",
 						"HaveCrew.sql", "Movie.sql", "TVShow.sql", "Episode.sql"};
-    		for (int i = 0; i < files.length; i++) { 
-			try { 
+    		for (int i = 0; i < files.length; i++) 
+		{ 
+			try 
+			{ 
 				System.out.println(files[i]); 
 				File myObj = new File("./SQL_Files/" + files[i]); 
 				Scanner myReader = new Scanner(myObj); 
-				while (myReader.hasNextLine()) { 
+				while (myReader.hasNextLine()) 
+				{ 
 					String data = myReader.nextLine(); 
 					try
 					{
@@ -213,10 +301,10 @@ class MyDatabase {
 			} 
     		} 
   	}
-
 	public String truncateString(String text, int length)
 	{
 		if(text.length() <= length) return text;
 		else return text.substring(0,length);
 	}
+	
 }
