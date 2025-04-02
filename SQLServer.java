@@ -29,7 +29,7 @@ public class SQLServer{
 	public static void runConsole(MyDatabase db)
 	{
 		Scanner console = new Scanner(System.in);
-		System.out.println("Welcome to database!");
+		System.out.println("Welcome to the Winnipeg Council Transparency Database!");
 		String line = "";
 		String[] parts;
 		String arg = "";
@@ -162,73 +162,7 @@ class MyDatabase {
 		} catch (SQLException e) {
 			e.printStackTrace(System.out);
 		}
-	}
-	//2 
-	public void searchPeople(String name) {
-		try {
-			String sqlMessage = "with numFilms as (select People.NameID as nID, count(People.NameID) as filmCount "+
-		    					"from People join HaveCrew on People.NameID = HaveCrew.NameID "+
-    							"where people.Name like ? "+
-								"group by People.NameID) "+
-								"select top 1000 People.Name, People.BirthYear,People.DeathYEar, PrimaryProfession, filmCount from People "+ 
-								"join numFilms on People.NameID = numFilms.nID "+
-								"order by filmCount desc;";
-			PreparedStatement statement = connection.prepareStatement(sqlMessage);
-			statement.setString(1, "%"+name+"%");
-			ResultSet resultSet = statement.executeQuery();
-			System.out.println(String.format("%-30s\t|\t%-10s\t|\t%-10s\t|\t%-20s\t|\t%-10s", "Name", "Birth Year", "Death Year", "Profession", "Credits"));
-			System.out.println("---------------------------------------------------------------------------------------------------------------------------------");
-			while(resultSet.next()){
-				System.out.println(String.format("%-30s\t|\t%-10d\t|\t%-10d\t|\t%-20s\t|\t%-10d", truncateString(resultSet.getString(1),30), resultSet.getInt(2), resultSet.getInt(3), truncateString(resultSet.getString(4),20), resultSet.getInt(5)));
-			}
-		} catch (SQLException e) {
-			e.printStackTrace(System.out);
-		}
-	}
-	//3
-	public void averageEpisodeDuration() {
-		try {
-			String sqlMessage = "with avgEpisode as (select Titles.TitleID as tid, avg(Titles.Runtime) as avgEpisodeDuration "+ 
-									"from TVShow "+
-									"join Episode on TVShow.TitleID = Episode.TitleID "+
-									"join Titles on Titles.TitleID = TVShow.TitleID "+
-									"group by Titles.TitleID) "+
-								"select Titles.OriginalTitle, Titles.StartYear, avgEpisodeDuration "+
-								"from Titles "+
-								"join avgEpisode on Titles.TitleID = avgEpisode.tid "+
-								"order by avgEpisode.avgEpisodeDuration desc, Titles.StartYear;";
-			PreparedStatement statement = connection.prepareStatement(sqlMessage);
-			ResultSet resultSet = statement.executeQuery();
-			System.out.println(String.format("%-30s\t|\t%-10s\t|\t%-10s","TV Show Title", "Start Year", "Average Episode length"));
-			System.out.println(String.format("------------------------------------------------------------------------------------------------"));
-			while(resultSet.next()){
-				System.out.println(String.format("%-30s\t|\t%-10s\t|\t%-10s", truncateString(resultSet.getString(1),30), resultSet.getInt(2), resultSet.getInt(3)));
-			}
-		} catch (SQLException e) {
-			e.printStackTrace(System.out);
-		}
-	}
-	
-	public void tvShow(String name) {
-		try {
-			String sqlMessage = "SELECT Episode.EpisodeID, Episode.SeasonNumber, Episode.EpisodeNumber, Titles.OriginalTitle "+
-								"FROM Episode "+
-								"JOIN TVShow ON Episode.TitleID = TVShow.TitleID "+
-								"JOIN Titles ON TVShow.TitleID = Titles.TitleID "+
-								"WHERE Titles.OriginalTitle LIKE ? "+
-								"ORDER BY Titles.TitleID;";
-			PreparedStatement statement = connection.prepareStatement(sqlMessage);
-			statement.setString(1, "%"+name+"%");
-			ResultSet resultSet = statement.executeQuery();
-			System.out.println(String.format("%-10s\t|\t%-10s\t|\t%-10s\t|\t%-30s","EpisodeID", "Season Number", "Episode Number", "Title"));
-			System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------");
-			while(resultSet.next()){
-				System.out.println(String.format("%-10s\t|\t%-10s\t|\t%-10s\t|\t%-30s",resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3), truncateString(resultSet.getString(4),30)));
-			}
-		} catch (SQLException e) {
-			e.printStackTrace(System.out);
-		}
-	}	
+	}		
 	
 	public void deleteTables() { 
     		try 
@@ -279,6 +213,7 @@ class MyDatabase {
 			} 
     		} 
   	}
+
 	public String truncateString(String text, int length)
 	{
 		if(text.length() <= length) return text;
